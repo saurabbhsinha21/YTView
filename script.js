@@ -1,202 +1,106 @@
-const apiKey = "AIzaSyCo5NvQZpziJdaCsOjf1H2Rq-1YeiU9Uq8";
+let chart, data = [], labels = [], interval;
+let spikeTimes = [];
 
-let interval, targetViews = 0, targetTime = null, dataPoints = [], viewChart;
+function startTracking() {
+  interval = setInterval(fetchData, 15000); // fetch every 15 seconds
+  fetchData();
+}
 
-const videoIdInput = document.getElementById("videoId");
-const targetViewsInput = document.getElementById("targetViews");
-const targetTimeInput = document.getElementById("targetTime");
-
-const currentViewsEl = document.getElementById("currentViews");
-const forecastEl = document.getElementById("forecast");
-const viewsLeftEl = document.getElementById("viewsLeft");
-const stopwatchEl = document.getElementById("stopwatch");
-const loadingEl = document.getElementById("loading");
-const spikePredictionEl = document.getElementById("spikePrediction");
-
-const timeBasedStats = {
-  "last5Min": document.getElementById("last5Min"),
-  "last10Min": document.getElementById("last10Min"),
-  "last15Min": document.getElementById("last15Min"),
-  "last20Min": document.getElementById("last20Min"),
-  "last25Min": document.getElementById("last25Min"),
-  "last30Min": document.getElementById("last30Min"),
-  "avgPerMin": document.getElementById("avgPerMin")
-};
-
-document.getElementById("startBtn").addEventListener("click", () => {
-  const videoId = videoIdInput.value.trim();
-  targetViews = parseInt(targetViewsInput.value.trim());
-  const timeParts = targetTimeInput.value.split(":");
-
-  if (!videoId || !targetViews || timeParts.length !== 2) {
-    alert("Please enter all fields correctly.");
-    return;
-  }
-
-  const now = new Date();
-  targetTime = new Date();
-  targetTime.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);
-  if (targetTime < now) targetTime.setDate(targetTime.getDate() + 1);
-
+function stopTracking() {
   clearInterval(interval);
-  loadingEl.classList.remove("hidden");
+}
 
-  if (!viewChart) {
-    const ctx = document.getElementById("viewChart").getContext("2d");
-    viewChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: [],
-        datasets: [{
-          label: 'Views',
-          data: [],
-          borderColor: '#007bff',
-          backgroundColor: 'rgba(0, 123, 255, 0.1)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 2
-        }]
-      },
-      options: {
-        animation: false,
-        responsive: true,
-        scales: {
-          x: {
-            display: true,
-            title: {
-              display: true,
-              text: 'Time'
-            }
-          },
-          y: {
-            beginAtZero: false
-          }
+async function fetchData() {
+  const videoId = document.getElementById("videoId").value;
+  const response = await fetch(`https://yt.lemnoslife.com/noKey/videos?part=statistics&id=${videoId}`);
+  const json = await response.json();
+  const views = parseInt(json.items[0].statistics.viewCount);
+  const now = new Date();
+  const timeLabel = now.toLocaleTimeString();
+
+  labels.push(timeLabel);
+  data.push(views);
+
+  detectSpike(views, now);
+
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('viewChart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Views',
+        data: data,
+        borderColor: 'blue',
+        fill: true,
+        backgroundColor: 'rgba(0,0,255,0.1)'
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: false
         }
       }
-    });
-  }
-
-  fetchAndUpdate(videoId);
-  interval = setInterval(() => fetchAndUpdate(videoId), 60000);
-});
-
-document.getElementById("stopBtn").addEventListener("click", () => {
-  clearInterval(interval);
-});
-
-function fetchAndUpdate(videoId) {
-  fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}&key=${apiKey}`)
-    .then(res => res.json())
-    .then(data => {
-      const views = parseInt(data.items?.[0]?.statistics?.viewCount || 0);
-      const timestamp = new Date();
-
-      currentViewsEl.textContent = `Current Views: ${views}`;
-      dataPoints.push({ timestamp, views });
-      if (dataPoints.length > 60) dataPoints.shift();
-
-      updateChart();
-      updateForecast(views);
-      updateStats();
-      updateStopwatch();
-      updateSpikeForecast();
-      loadingEl.classList.add("hidden");
-    })
-    .catch(err => {
-      console.error("Fetch error:", err);
-      loadingEl.classList.add("hidden");
-    });
-}
-
-function updateChart() {
-  const labels = dataPoints.map(dp => dp.timestamp.toLocaleTimeString());
-  const values = dataPoints.map(dp => dp.views);
-
-  viewChart.data.labels = labels;
-  viewChart.data.datasets[0].data = values;
-
-  const minY = Math.min(...values);
-  const maxY = Math.max(...values);
-  viewChart.options.scales.y.min = minY - 100;
-  viewChart.options.scales.y.max = maxY + 100;
-
-  viewChart.update();
-}
-
-function updateForecast(currentViews) {
-  const now = new Date();
-  const timeLeftMinutes = Math.max((targetTime - now) / 60000, 0);
-  const viewsLeft = targetViews - currentViews;
-  const recent = dataPoints.slice(-15);
-  const avgPerMin = recent.length > 1
-    ? (recent[recent.length - 1].views - recent[0].views) / (recent.length - 1)
-    : 0;
-  const projected = avgPerMin * timeLeftMinutes;
-
-  forecastEl.textContent = `Forecast: ${projected >= viewsLeft ? "Yes" : "No"}`;
-  viewsLeftEl.textContent = `Views Left: ${viewsLeft}`;
-  viewsLeftEl.className = viewsLeft <= projected ? "green" : "red";
-}
-
-function updateStats() {
-  const now = new Date();
-  [5, 10, 15, 20, 25, 30].forEach(min => {
-    const past = new Date(now.getTime() - min * 60000);
-    const filtered = dataPoints.filter(dp => dp.timestamp >= past);
-    const views = filtered.length > 1 ? filtered[filtered.length - 1].views - filtered[0].views : "-";
-    timeBasedStats[`last${min}Min`].textContent = `Last ${min} Min Views: ${views}`;
+    }
   });
 
-  const last15 = dataPoints.filter(dp => dp.timestamp >= new Date(Date.now() - 15 * 60000));
-  const avg = last15.length > 1
-    ? ((last15[last15.length - 1].views - last15[0].views) / (last15.length - 1))
-    : "-";
-  timeBasedStats["avgPerMin"].textContent = `Avg Views/Min (Last 15 min): ${typeof avg === "number" ? avg.toFixed(2) : "-"}`;
+  updateStats(views);
 }
 
-function updateStopwatch() {
-  const now = new Date();
-  const diff = targetTime - now;
-  if (diff <= 0) {
-    stopwatchEl.textContent = "Time Left: 00:00";
-    clearInterval(interval);
-    return;
+function detectSpike(currentViews, currentTime) {
+  const len = data.length;
+  if (len < 2) return;
+
+  const diff = currentViews - data[len - 2];
+  if (diff > 5000) { // Define spike threshold
+    spikeTimes.push(currentTime);
   }
-  const mins = Math.floor(diff / 60000);
-  const secs = Math.floor((diff % 60000) / 1000);
-  stopwatchEl.textContent = `Time Left: ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
-function updateSpikeForecast() {
-  const minSpikeThreshold = 500;
-  const spikeTimes = [];
-  let lastSpikeTime = null;
-  let spikeSizes = [];
+function updateStats(currentViews) {
+  const targetViews = parseInt(document.getElementById("targetViews").value);
+  const viewsLeft = targetViews - currentViews;
+  const viewsLeftEl = document.getElementById("viewsLeft");
+  const forecastEl = document.getElementById("forecast");
+  const spikeForecastEl = document.getElementById("spikeForecast");
+  const timeLeftEl = document.getElementById("timeLeft");
+  const viewsPerMinRequiredEl = document.getElementById("viewsPerMinRequired");
+  const viewsNext5MinEl = document.getElementById("viewsNext5Min");
 
-  for (let i = 1; i < dataPoints.length; i++) {
-    const diff = dataPoints[i].views - dataPoints[i - 1].views;
-    if (diff >= minSpikeThreshold) {
-      const time = dataPoints[i].timestamp;
-      if (lastSpikeTime) {
-        spikeTimes.push(time - lastSpikeTime);
-      }
-      spikeSizes.push(diff);
-      lastSpikeTime = time;
+  viewsLeftEl.textContent = viewsLeft.toLocaleString();
+
+  // Time Left
+  const targetTime = document.getElementById("targetTime").value;
+  const now = new Date();
+  const [h, m] = targetTime.split(':');
+  const future = new Date(now);
+  future.setHours(h, m, 0, 0);
+
+  let secondsLeft = (future - now) / 1000;
+  if (secondsLeft < 0) secondsLeft = 0;
+
+  const minsLeft = secondsLeft / 60;
+  timeLeftEl.textContent = `${Math.floor(minsLeft)}:${String(Math.floor(secondsLeft % 60)).padStart(2, '0')}`;
+
+  const viewsPerMinRequired = (viewsLeft / minsLeft).toFixed(2);
+  viewsPerMinRequiredEl.textContent = isFinite(viewsPerMinRequired) ? viewsPerMinRequired : "-";
+
+  const viewsNext5Min = (viewsPerMinRequired * 5).toFixed(0);
+  viewsNext5MinEl.textContent = isFinite(viewsNext5Min) ? viewsNext5Min : "-";
+
+  // Spike Forecast
+  if (spikeTimes.length >= 2) {
+    const intervals = [];
+    for (let i = 1; i < spikeTimes.length; i++) {
+      intervals.push((spikeTimes[i] - spikeTimes[i - 1]) / 1000 / 60); // in minutes
     }
+    const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    const expectedSpikes = Math.floor(minsLeft / avgInterval);
+    spikeForecastEl.textContent = `${expectedSpikes} spike(s) expected (avg every ${avgInterval.toFixed(1)} min)`;
+  } else {
+    spikeForecastEl.textContent = "-";
   }
 
-  if (spikeTimes.length === 0 || spikeSizes.length === 0) {
-    spikePredictionEl.textContent = "Spike-based Forecast: Not enough data";
-    return;
-  }
-
-  const avgSpikeTimeMs = spikeTimes.reduce((a, b) => a + b, 0) / spikeTimes.length;
-  const avgSpikeViews = spikeSizes.reduce((a, b) => a + b, 0) / spikeSizes.length;
-
-  const now = new Date();
-  const timeLeftMs = targetTime - now;
-  const estRemainingSpikes = Math.floor(timeLeftMs / avgSpikeTimeMs);
-  const projectedSpikeViews = estRemainingSpikes * avgSpikeViews;
-
-  spikePredictionEl.textContent = `Spike-based Forecast: ~${estRemainingSpikes} spikes left, ~${Math.round(projectedSpikeViews)} views`;
+  forecastEl.textContent = viewsLeft <= 0 ? "Yes" : "No";
 }
