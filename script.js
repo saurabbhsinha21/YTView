@@ -10,6 +10,7 @@ const currentViewsEl = document.getElementById("currentViews");
 const forecastEl = document.getElementById("forecast");
 const viewsLeftEl = document.getElementById("viewsLeft");
 const stopwatchEl = document.getElementById("stopwatch");
+
 const loadingEl = document.getElementById("loading");
 
 const timeBasedStats = {
@@ -24,8 +25,8 @@ const timeBasedStats = {
 
 document.getElementById("startBtn").addEventListener("click", () => {
   const videoId = videoIdInput.value.trim();
-  const timeParts = targetTimeInput.value.split(":");
   targetViews = parseInt(targetViewsInput.value.trim());
+  const timeParts = targetTimeInput.value.split(":");
 
   if (!videoId || !targetViews || timeParts.length !== 2) {
     alert("Please enter all fields correctly.");
@@ -50,20 +51,33 @@ document.getElementById("startBtn").addEventListener("click", () => {
           label: 'Views',
           data: [],
           borderColor: '#007bff',
-          fill: false
+          backgroundColor: 'rgba(0, 123, 255, 0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2
         }]
       },
       options: {
+        animation: false,
+        responsive: true,
         scales: {
-          x: { display: true },
-          y: { beginAtZero: true }
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Time'
+            }
+          },
+          y: {
+            beginAtZero: false
+          }
         }
       }
     });
   }
 
   fetchAndUpdate(videoId);
-  interval = setInterval(() => fetchAndUpdate(videoId), 60 * 1000);
+  interval = setInterval(() => fetchAndUpdate(videoId), 60000);
 });
 
 document.getElementById("stopBtn").addEventListener("click", () => {
@@ -79,18 +93,16 @@ function fetchAndUpdate(videoId) {
 
       currentViewsEl.textContent = `Current Views: ${views}`;
       dataPoints.push({ timestamp, views });
-
-      if (dataPoints.length > 300) dataPoints.shift(); // keep only recent ~5 hrs
+      if (dataPoints.length > 60) dataPoints.shift();
 
       updateChart();
       updateForecast(views);
       updateStats();
       updateStopwatch();
-
       loadingEl.classList.add("hidden");
     })
     .catch(err => {
-      console.error("Error fetching data", err);
+      console.error("Fetch error:", err);
       loadingEl.classList.add("hidden");
     });
 }
@@ -98,14 +110,21 @@ function fetchAndUpdate(videoId) {
 function updateChart() {
   const labels = dataPoints.map(dp => dp.timestamp.toLocaleTimeString());
   const values = dataPoints.map(dp => dp.views);
+
   viewChart.data.labels = labels;
   viewChart.data.datasets[0].data = values;
+
+  const minY = Math.min(...values);
+  const maxY = Math.max(...values);
+  viewChart.options.scales.y.min = minY - 100;
+  viewChart.options.scales.y.max = maxY + 100;
+
   viewChart.update();
 }
 
 function updateForecast(currentViews) {
   const now = new Date();
-  const timeLeftMinutes = Math.max((targetTime - now) / (1000 * 60), 0);
+  const timeLeftMinutes = Math.max((targetTime - now) / 60000, 0);
   const viewsLeft = targetViews - currentViews;
   const recent = dataPoints.slice(-15);
   const avgPerMin = recent.length > 1
@@ -128,7 +147,9 @@ function updateStats() {
   });
 
   const last15 = dataPoints.filter(dp => dp.timestamp >= new Date(Date.now() - 15 * 60000));
-  const avg = last15.length > 1 ? ((last15[last15.length - 1].views - last15[0].views) / (last15.length - 1)) : "-";
+  const avg = last15.length > 1
+    ? ((last15[last15.length - 1].views - last15[0].views) / (last15.length - 1))
+    : "-";
   timeBasedStats["avgPerMin"].textContent = `Avg Views/Min (Last 15 min): ${typeof avg === "number" ? avg.toFixed(2) : "-"}`;
 }
 
