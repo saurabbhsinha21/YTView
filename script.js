@@ -10,8 +10,8 @@ const currentViewsEl = document.getElementById("currentViews");
 const forecastEl = document.getElementById("forecast");
 const viewsLeftEl = document.getElementById("viewsLeft");
 const stopwatchEl = document.getElementById("stopwatch");
-
 const loadingEl = document.getElementById("loading");
+const spikePredictionEl = document.getElementById("spikePrediction");
 
 const timeBasedStats = {
   "last5Min": document.getElementById("last5Min"),
@@ -99,6 +99,7 @@ function fetchAndUpdate(videoId) {
       updateForecast(views);
       updateStats();
       updateStopwatch();
+      updateSpikeForecast();
       loadingEl.classList.add("hidden");
     })
     .catch(err => {
@@ -164,4 +165,38 @@ function updateStopwatch() {
   const mins = Math.floor(diff / 60000);
   const secs = Math.floor((diff % 60000) / 1000);
   stopwatchEl.textContent = `Time Left: ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function updateSpikeForecast() {
+  const minSpikeThreshold = 500;
+  const spikeTimes = [];
+  let lastSpikeTime = null;
+  let spikeSizes = [];
+
+  for (let i = 1; i < dataPoints.length; i++) {
+    const diff = dataPoints[i].views - dataPoints[i - 1].views;
+    if (diff >= minSpikeThreshold) {
+      const time = dataPoints[i].timestamp;
+      if (lastSpikeTime) {
+        spikeTimes.push(time - lastSpikeTime);
+      }
+      spikeSizes.push(diff);
+      lastSpikeTime = time;
+    }
+  }
+
+  if (spikeTimes.length === 0 || spikeSizes.length === 0) {
+    spikePredictionEl.textContent = "Spike-based Forecast: Not enough data";
+    return;
+  }
+
+  const avgSpikeTimeMs = spikeTimes.reduce((a, b) => a + b, 0) / spikeTimes.length;
+  const avgSpikeViews = spikeSizes.reduce((a, b) => a + b, 0) / spikeSizes.length;
+
+  const now = new Date();
+  const timeLeftMs = targetTime - now;
+  const estRemainingSpikes = Math.floor(timeLeftMs / avgSpikeTimeMs);
+  const projectedSpikeViews = estRemainingSpikes * avgSpikeViews;
+
+  spikePredictionEl.textContent = `Spike-based Forecast: ~${estRemainingSpikes} spikes left, ~${Math.round(projectedSpikeViews)} views`;
 }
