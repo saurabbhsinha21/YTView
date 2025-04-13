@@ -1,29 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live View Tracker</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YouTube Live View Tracker</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <img src="logo2.png" alt="Live View Tracker Logo" class="logo">
-    <h1>Live View Tracker</h1>
-  </header>
+  <div class="header">
+    <img src="logo2.png" alt="Live View Tracker Logo">
+    <span class="title">Live View Tracker</span>
+  </div>
 
   <div class="container">
-    <input type="text" id="videoId" placeholder="Enter YouTube Video ID">
-    <input type="number" id="targetViews" placeholder="Enter Target Views">
-    <input type="time" id="targetTime">
-    <button id="startBtn">Start Tracking</button>
-    <button id="stopBtn">Stop</button>
+    <div class="input-section">
+      <input type="text" id="videoId" placeholder="Enter YouTube Video ID" />
+      <input type="number" id="targetViews" placeholder="Enter Target Views" />
+      <input type="time" id="targetTime" />
+      <button id="startBtn">Start Tracking</button>
+      <button id="stopBtn">Stop</button>
+    </div>
 
     <div id="loading" class="hidden">Collecting data...</div>
 
     <div class="stats">
       <p id="currentViews">Current Views: -</p>
-      <p id="viewsLeft">Views Left: -</p>
+      <p id="viewsLeft" class="red">Views Left to Meet Target: -</p>
       <p id="forecast">Forecast: -</p>
       <p id="stopwatch">Time Left: -</p>
       <p id="last5Min">Last 5 Min Views: -</p>
@@ -32,10 +34,10 @@
       <p id="last20Min">Last 20 Min Views: -</p>
       <p id="last25Min">Last 25 Min Views: -</p>
       <p id="last30Min">Last 30 Min Views: -</p>
-      <p id="avgPerMin">Avg Views/Min (Last 15 min): -</p>
+      <p id="avgPerMin">Avg Views/Min (Last 15 min): 0.00</p>
     </div>
 
-    <canvas id="viewChart"></canvas>
+    <canvas id="viewChart" width="400" height="200"></canvas>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
