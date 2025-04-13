@@ -1,33 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube View Tracker</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YouTube Live View Tracker</title>
+  <link rel="stylesheet" href="style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
-    <input type="text" id="videoId" placeholder="Video ID" value="iUn5F52SNuY">
-    <input type="number" id="targetViews" placeholder="Target Views" value="5000000">
-    <input type="time" id="targetTime" value="17:30">
-    <button onclick="startTracking()">Start Tracking</button>
-    <button onclick="stopTracking()">Stop</button>
-
-    <div class="stats">
-      <p>Current Views: <span id="currentViews">-</span></p>
-      <p>Forecast: <span id="forecast">-</span></p>
-      <p style="color: green">Views Left: <span id="viewsLeft">-</span></p>
-      <p>Time Left: <span id="timeLeft">-</span></p>
-      <p>Spike-based Forecast: <span id="spikeForecast">-</span></p>
-      <p>Views/min Required: <span id="viewsPerMinRequired">-</span></p>
-      <p>Views Required in next 5 min: <span id="viewsNext5Min">-</span></p>
+    <h2>YouTube Live View Tracker</h2>
+    <div class="inputs">
+      <input type="text" id="videoId" placeholder="Enter Video ID" value="iUn5F52SNuY" />
+      <input type="number" id="targetViews" placeholder="Target Views" value="4900000" />
+      <input type="time" id="targetTime" />
+      <button onclick="startTracking()">Start Tracking</button>
+      <button onclick="stopTracking()">Stop</button>
     </div>
-
-    <canvas id="viewChart" width="800" height="400"></canvas>
+    <div id="stats">
+      <p>Current Views: <span id="currentViews">-</span></p>
+      <p>Forecast: <span id="forecastStatus">-</span></p>
+      <p>Spike-based Forecast: <span id="spikeForecast">-</span></p>
+      <p>Views Left: <span id="viewsLeft">-</span></p>
+      <p>Time Left: <span id="timeLeft">-</span></p>
+      <p>Views/Min Required: <span id="viewsPerMinRequired">-</span></p>
+      <p>Views Required (Next 5 Min): <span id="viewsNext5Min">-</span></p>
+      <p>Last 5 Min Views: <span id="views5">-</span></p>
+      <p>Last 10 Min Views: <span id="views10">-</span></p>
+      <p>Last 15 Min Views: <span id="views15">-</span></p>
+      <p>Last 20 Min Views: <span id="views20">-</span></p>
+      <p>Last 25 Min Views: <span id="views25">-</span></p>
+      <p>Last 30 Min Views: <span id="views30">-</span></p>
+      <p>Avg Views/Min (Last 15 min): <span id="avgViews">-</span></p>
+    </div>
+    <canvas id="viewsChart"></canvas>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
