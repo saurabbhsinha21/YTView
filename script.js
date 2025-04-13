@@ -1,119 +1,148 @@
-const API_KEY = "AIzaSyCo5NvQZpziJdaCsOjf1H2Rq-1YeiU9Uq8";
-let chart;
-let timestamps = [];
-let viewCounts = [];
+const apiKey = "AIzaSyCo5NvQZpziJdaCsOjf1H2Rq-1YeiU9Uq8";
 
-function getLiveViews(videoId) {
-    const url = `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails,statistics&id=${videoId}&key=${API_KEY}`;
-    return fetch(url)
-        .then(res => res.json())
-        .then(data => {
-            if (data.items.length === 0) return null;
-            return parseInt(data.items[0].statistics.viewCount);
-        });
-}
+let interval, targetViews = 0, targetTime = null, dataPoints = [], viewChart;
 
-function formatTimeLeft(diffMs) {
-    const minutes = Math.floor(diffMs / 60000);
-    const seconds = Math.floor((diffMs % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
+const videoIdInput = document.getElementById("videoId");
+const targetViewsInput = document.getElementById("targetViews");
+const targetTimeInput = document.getElementById("targetTime");
 
-function calculateStats(targetTime, targetViews) {
-    const now = new Date();
-    const diffMs = targetTime - now;
-    const timeLeftMins = diffMs / 60000;
+const currentViewsEl = document.getElementById("currentViews");
+const forecastEl = document.getElementById("forecast");
+const viewsLeftEl = document.getElementById("viewsLeft");
+const stopwatchEl = document.getElementById("stopwatch");
 
-    const viewsLeft = targetViews - viewCounts[viewCounts.length - 1];
-    const rateRequired = (viewsLeft / timeLeftMins).toFixed(2);
-    const forecast = avgViewsPerMin(15) >= rateRequired;
-    const requiredNext5 = Math.ceil(rateRequired * 5);
+const loadingEl = document.getElementById("loading");
 
-    document.getElementById("requiredRate").textContent = rateRequired;
-    document.getElementById("viewsLeft").innerHTML = `<span style="color:${forecast ? 'green' : 'red'}">${viewsLeft.toLocaleString()}</span>`;
-    document.getElementById("requiredNext5").textContent = requiredNext5;
-    document.getElementById("projectedViews").textContent = (avgViewsPerMin(15) * timeLeftMins + viewCounts[viewCounts.length - 1]).toFixed(0);
-    document.getElementById("forecast").textContent = forecast ? "Yes" : "No";
-    document.getElementById("timeLeft").textContent = formatTimeLeft(diffMs);
-}
+const timeBasedStats = {
+  "last10Min": document.getElementById("last10Min"),
+  "last15Min": document.getElementById("last15Min"),
+  "last20Min": document.getElementById("last20Min"),
+  "last25Min": document.getElementById("last25Min"),
+  "last30Min": document.getElementById("last30Min"),
+  "avgPerMin": document.getElementById("avgPerMin")
+};
 
-function avgViewsPerMin(minutes) {
-    const now = Date.now();
-    const cutoff = now - minutes * 60000;
-    let total = 0, count = 0;
-    for (let i = viewCounts.length - 1; i > 0; i--) {
-        if (timestamps[i] >= cutoff) {
-            total += viewCounts[i] - viewCounts[i - 1];
-            count++;
+document.getElementById("startBtn").addEventListener("click", () => {
+  const videoId = videoIdInput.value.trim();
+  targetViews = parseInt(targetViewsInput.value.trim());
+  const timeParts = targetTimeInput.value.split(":");
+
+  if (!videoId || !targetViews || timeParts.length !== 2) {
+    alert("Please enter all fields correctly.");
+    return;
+  }
+
+  const now = new Date();
+  targetTime = new Date();
+  targetTime.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);
+  if (targetTime < now) targetTime.setDate(targetTime.getDate() + 1);
+
+  clearInterval(interval);
+  dataPoints = [];
+
+  loadingEl.classList.remove("hidden");
+
+  if (!viewChart) {
+    const ctx = document.getElementById("viewChart").getContext("2d");
+    viewChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Views',
+          data: [],
+          borderColor: '#007bff',
+          fill: false
+        }]
+      },
+      options: {
+        scales: {
+          x: { display: true },
+          y: { beginAtZero: true }
         }
-    }
-    return count > 0 ? (total / count).toFixed(2) : 0;
+      }
+    });
+  }
+
+  fetchAndUpdate(videoId);
+  interval = setInterval(() => fetchAndUpdate(videoId), 60 * 1000);
+});
+
+document.getElementById("stopBtn").addEventListener("click", () => {
+  clearInterval(interval);
+});
+
+function fetchAndUpdate(videoId) {
+  fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}&key=${apiKey}`)
+    .then(res => res.json())
+    .then(data => {
+      const views = parseInt(data.items?.[0]?.statistics?.viewCount || 0);
+      const timestamp = new Date();
+
+      currentViewsEl.textContent = `Current Views: ${views}`;
+      dataPoints.push({ timestamp, views });
+
+      if (dataPoints.length > 60) dataPoints.shift();
+
+      updateChart();
+      updateForecast(views);
+      updateStats();
+      updateStopwatch();
+
+      loadingEl.classList.add("hidden");
+    })
+    .catch(err => {
+      console.error("Error fetching data", err);
+      loadingEl.classList.add("hidden");
+    });
 }
 
 function updateChart() {
-    chart.data.labels = timestamps.map(ts => new Date(ts).toLocaleTimeString());
-    chart.data.datasets[0].data = viewCounts;
-    chart.update();
+  const labels = dataPoints.map(dp => dp.timestamp.toLocaleTimeString());
+  const values = dataPoints.map(dp => dp.views);
+  viewChart.data.labels = labels;
+  viewChart.data.datasets[0].data = values;
+  viewChart.update();
 }
 
-function startTracking() {
-    const videoId = document.getElementById("videoId").value.trim();
-    const targetViews = parseInt(document.getElementById("targetViews").value.trim());
-    const targetTimeStr = document.getElementById("targetTime").value;
-    const [targetHour, targetMinute] = targetTimeStr.split(":").map(Number);
-    const now = new Date();
-    const targetTime = new Date();
-    targetTime.setHours(targetHour, targetMinute, 0, 0);
+function updateForecast(currentViews) {
+  const now = new Date();
+  const timeLeftMinutes = Math.max((targetTime - now) / (1000 * 60), 0);
+  const viewsLeft = targetViews - currentViews;
+  const recent = dataPoints.slice(-15);
+  const avgPerMin = recent.length > 1
+    ? (recent[recent.length - 1].views - recent[0].views) / (recent.length - 1)
+    : 0;
+  const projected = avgPerMin * timeLeftMinutes;
 
-    document.getElementById("stats").style.display = "block";
-
-    const ctx = document.getElementById("viewChart").getContext("2d");
-    chart = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: [],
-            datasets: [{
-                label: "Live Views",
-                data: [],
-                borderColor: "blue",
-                backgroundColor: "blue",
-                fill: false,
-                tension: 0.1
-            }]
-        }
-    });
-
-    setInterval(async () => {
-        const count = await getLiveViews(videoId);
-        if (!count) return;
-        const now = Date.now();
-        viewCounts.push(count);
-        timestamps.push(now);
-        if (viewCounts.length > 60) {
-            viewCounts.shift();
-            timestamps.shift();
-        }
-
-        document.getElementById("liveCount").textContent = count.toLocaleString();
-        document.getElementById("last5").textContent = getDeltaViews(5);
-        document.getElementById("last10").textContent = getDeltaViews(10);
-        document.getElementById("last15").textContent = getDeltaViews(15);
-        document.getElementById("last20").textContent = getDeltaViews(20);
-        document.getElementById("last25").textContent = getDeltaViews(25);
-        document.getElementById("last30").textContent = getDeltaViews(30);
-        document.getElementById("avg").textContent = avgViewsPerMin(15);
-        updateChart();
-        calculateStats(targetTime, targetViews);
-    }, 60000);
+  forecastEl.textContent = `Forecast: ${projected >= viewsLeft ? "Yes" : "No"}`;
+  viewsLeftEl.textContent = `Views Left: ${viewsLeft}`;
+  viewsLeftEl.className = viewsLeft <= projected ? "green" : "red";
 }
 
-function getDeltaViews(minutes) {
-    const now = Date.now();
-    const cutoff = now - minutes * 60000;
-    for (let i = timestamps.length - 1; i >= 0; i--) {
-        if (timestamps[i] < cutoff) {
-            return (viewCounts[viewCounts.length - 1] - viewCounts[i]).toLocaleString();
-        }
-    }
-    return "Collecting data...";
+function updateStats() {
+  const now = new Date();
+  [10, 15, 20, 25, 30].forEach(min => {
+    const past = new Date(now.getTime() - min * 60000);
+    const filtered = dataPoints.filter(dp => dp.timestamp >= past);
+    const views = filtered.length > 1 ? filtered[filtered.length - 1].views - filtered[0].views : "-";
+    timeBasedStats[`last${min}Min`].textContent = `Last ${min} Min Views: ${views}`;
+  });
+
+  const last15 = dataPoints.filter(dp => dp.timestamp >= new Date(Date.now() - 15 * 60000));
+  const avg = last15.length > 1 ? ((last15[last15.length - 1].views - last15[0].views) / (last15.length - 1)) : "-";
+  timeBasedStats["avgPerMin"].textContent = `Avg Views/Min (Last 15 min): ${typeof avg === "number" ? avg.toFixed(2) : "-"}`;
+}
+
+function updateStopwatch() {
+  const now = new Date();
+  const diff = targetTime - now;
+  if (diff <= 0) {
+    stopwatchEl.textContent = "Time Left: 00:00";
+    clearInterval(interval);
+    return;
+  }
+  const mins = Math.floor(diff / 60000);
+  const secs = Math.floor((diff % 60000) / 1000);
+  stopwatchEl.textContent = `Time Left: ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
