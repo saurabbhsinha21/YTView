@@ -1,24 +1,44 @@
 body {
   font-family: Arial, sans-serif;
-  margin: 20px;
-  background-color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+  background: #f7f7f7;
 }
 
 .container {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  max-width: 900px;
+  max-width: 960px;
   margin: auto;
+  padding: 20px;
+  background: #fff;
+  box-shadow: 0px 0px 10px #ddd;
 }
 
-input, button {
-  padding: 8px 12px;
-  margin: 5px;
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.inputs {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.inputs input, .inputs button {
+  padding: 10px;
   font-size: 16px;
+  margin: 5px;
 }
 
-.stats p {
-  margin: 5px 0;
+#stats {
+  margin-bottom: 20px;
+}
+
+#stats p {
+  margin: 4px 0;
+}
+
+canvas {
+  max-width: 100%;
 }
