@@ -1,68 +1,79 @@
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #f7f9fc;
+  font-family: Arial, sans-serif;
+  background-color: #f7f9fc;
   margin: 0;
   padding: 0;
-  color: #333;
 }
 
-header {
-  background-color: #ffffff;
+.header {
   display: flex;
   align-items: center;
-  padding: 10px 20px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.logo {
+.header img {
   height: 40px;
-  margin-right: 15px;
+  margin-right: 10px;
+}
+
+.header .title {
+  font-size: 24px;
+  font-weight: bold;
 }
 
 .container {
-  max-width: 700px;
+  max-width: 800px;
   margin: 30px auto;
   padding: 20px;
-  background: #ffffff;
+  background: white;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
 }
 
-input, button {
+.input-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.input-section input,
+.input-section button {
   padding: 10px;
-  margin: 5px 5px 10px 0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  font-size: 14px;
 }
 
-button {
-  cursor: pointer;
+.input-section button {
   background-color: #007bff;
   color: white;
   border: none;
+  cursor: pointer;
 }
 
-button:hover {
+.input-section button:hover {
   background-color: #0056b3;
 }
 
 .stats p {
-  margin: 8px 0;
-}
-
-#viewsLeft.green {
-  color: green;
-}
-
-#viewsLeft.red {
-  color: red;
+  margin: 6px 0;
 }
 
 .hidden {
   display: none;
 }
 
-#viewChart {
-  margin-top: 30px;
-  max-height: 300px;
+.green {
+  color: green;
+}
+
+.red {
+  color: red;
+}
+
+canvas {
+  margin-top: 20px;
+  width: 100% !important;
+  height: auto !important;
 }
