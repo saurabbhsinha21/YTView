@@ -1,57 +1,68 @@
 body {
-    font-family: Arial, sans-serif;
-    background: #f9f9f9;
-    color: #333;
-    margin: 0;
-    padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #f7f9fc;
+  margin: 0;
+  padding: 0;
+  color: #333;
 }
 
-.container {
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 20px;
-    background: white;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    border-radius: 8px;
-    text-align: center;
+header {
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .logo {
-    width: 80px;
-    margin-bottom: 10px;
+  height: 40px;
+  margin-right: 15px;
 }
 
-h1 {
-    margin-bottom: 20px;
-    color: #0073e6;
+.container {
+  max-width: 700px;
+  margin: 30px auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-input {
-    width: 80%;
-    padding: 10px;
-    margin: 10px 0;
-    font-size: 16px;
+input, button {
+  padding: 10px;
+  margin: 5px 5px 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 4px;
+  cursor: pointer;
+  background-color: #007bff;
+  color: white;
+  border: none;
 }
 
 button:hover {
-    background-color: #0056b3;
+  background-color: #0056b3;
 }
 
-#viewStats p {
-    text-align: left;
-    margin: 5px 0;
+.stats p {
+  margin: 8px 0;
 }
 
-canvas {
-    margin-top: 20px;
+#viewsLeft.green {
+  color: green;
+}
+
+#viewsLeft.red {
+  color: red;
+}
+
+.hidden {
+  display: none;
+}
+
+#viewChart {
+  margin-top: 30px;
+  max-height: 300px;
 }
