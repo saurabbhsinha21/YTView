@@ -1,4 +1,4 @@
-script.js - const apiKey = "AIzaSyCo5NvQZpziJdaCsOjf1H2Rq-1YeiU9Uq8";
+const apiKey = "AIzaSyCo5NvQZpziJdaCsOjf1H2Rq-1YeiU9Uq8";
 
 let interval, targetViews = 0, targetTime = null, dataPoints = [], viewChart;
 
