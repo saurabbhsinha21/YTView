@@ -10,6 +10,7 @@ const currentViewsEl = document.getElementById("currentViews");
 const forecastEl = document.getElementById("forecast");
 const viewsLeftEl = document.getElementById("viewsLeft");
 const stopwatchEl = document.getElementById("stopwatch");
+const spikeForecastEl = document.getElementById("spikeForecast");
 
 const loadingEl = document.getElementById("loading");
 
@@ -39,6 +40,7 @@ document.getElementById("startBtn").addEventListener("click", () => {
   if (targetTime < now) targetTime.setDate(targetTime.getDate() + 1);
 
   clearInterval(interval);
+
   loadingEl.classList.remove("hidden");
 
   if (!viewChart) {
@@ -51,33 +53,20 @@ document.getElementById("startBtn").addEventListener("click", () => {
           label: 'Views',
           data: [],
           borderColor: '#007bff',
-          backgroundColor: 'rgba(0, 123, 255, 0.1)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 2
+          fill: false
         }]
       },
       options: {
-        animation: false,
-        responsive: true,
         scales: {
-          x: {
-            display: true,
-            title: {
-              display: true,
-              text: 'Time'
-            }
-          },
-          y: {
-            beginAtZero: false
-          }
+          x: { display: true },
+          y: { beginAtZero: true }
         }
       }
     });
   }
 
   fetchAndUpdate(videoId);
-  interval = setInterval(() => fetchAndUpdate(videoId), 60000);
+  interval = setInterval(() => fetchAndUpdate(videoId), 60 * 1000);
 });
 
 document.getElementById("stopBtn").addEventListener("click", () => {
@@ -93,16 +82,18 @@ function fetchAndUpdate(videoId) {
 
       currentViewsEl.textContent = `Current Views: ${views}`;
       dataPoints.push({ timestamp, views });
-      if (dataPoints.length > 60) dataPoints.shift();
+
+      if (dataPoints.length > 120) dataPoints.shift();
 
       updateChart();
       updateForecast(views);
       updateStats();
       updateStopwatch();
+
       loadingEl.classList.add("hidden");
     })
     .catch(err => {
-      console.error("Fetch error:", err);
+      console.error("Error fetching data", err);
       loadingEl.classList.add("hidden");
     });
 }
@@ -110,21 +101,24 @@ function fetchAndUpdate(videoId) {
 function updateChart() {
   const labels = dataPoints.map(dp => dp.timestamp.toLocaleTimeString());
   const values = dataPoints.map(dp => dp.views);
-
   viewChart.data.labels = labels;
   viewChart.data.datasets[0].data = values;
-
-  const minY = Math.min(...values);
-  const maxY = Math.max(...values);
-  viewChart.options.scales.y.min = minY - 100;
-  viewChart.options.scales.y.max = maxY + 100;
-
   viewChart.update();
+}
+
+function countSpikes(data) {
+  let spikes = 0;
+  for (let i = 1; i < data.length - 1; i++) {
+    const deltaPrev = data[i].views - data[i - 1].views;
+    const deltaNext = data[i + 1].views - data[i].views;
+    if (deltaPrev > 100 && deltaNext < 20) spikes++;
+  }
+  return spikes;
 }
 
 function updateForecast(currentViews) {
   const now = new Date();
-  const timeLeftMinutes = Math.max((targetTime - now) / 60000, 0);
+  const timeLeftMinutes = Math.max((targetTime - now) / (1000 * 60), 0);
   const viewsLeft = targetViews - currentViews;
   const recent = dataPoints.slice(-15);
   const avgPerMin = recent.length > 1
@@ -132,9 +126,17 @@ function updateForecast(currentViews) {
     : 0;
   const projected = avgPerMin * timeLeftMinutes;
 
-  forecastEl.textContent = `Forecast: ${projected >= viewsLeft ? "Yes" : "No"}`;
+  const spikeRate = countSpikes(dataPoints) / dataPoints.length * 60; // spike per hour-ish
+  const forecastedSpikes = Math.floor(timeLeftMinutes / 5); // estimate: 1 spike every ~5 min
+  const estimatedSpikeBoost = forecastedSpikes * 100; // ~100 views per spike
+
+  spikeForecastEl.textContent = `Forecasted Spikes Left: ${forecastedSpikes}`;
+
+  const finalProjected = projected + estimatedSpikeBoost;
+
+  forecastEl.textContent = `Forecast: ${finalProjected >= viewsLeft ? "Yes" : "No"}`;
   viewsLeftEl.textContent = `Views Left: ${viewsLeft}`;
-  viewsLeftEl.className = viewsLeft <= projected ? "green" : "red";
+  viewsLeftEl.className = viewsLeft <= finalProjected ? "green" : "red";
 }
 
 function updateStats() {
@@ -147,9 +149,7 @@ function updateStats() {
   });
 
   const last15 = dataPoints.filter(dp => dp.timestamp >= new Date(Date.now() - 15 * 60000));
-  const avg = last15.length > 1
-    ? ((last15[last15.length - 1].views - last15[0].views) / (last15.length - 1))
-    : "-";
+  const avg = last15.length > 1 ? ((last15[last15.length - 1].views - last15[0].views) / (last15.length - 1)) : "-";
   timeBasedStats["avgPerMin"].textContent = `Avg Views/Min (Last 15 min): ${typeof avg === "number" ? avg.toFixed(2) : "-"}`;
 }
 
