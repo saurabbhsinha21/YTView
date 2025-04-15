@@ -2,45 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Live View Tracker</title>
+  <title>YouTube Live View Tracker</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Live View Tracker</h1>
-  </header>
-
   <div class="container">
-    <div class="form-section">
-      <input type="text" id="videoId" placeholder="YouTube Video ID">
-      <input type="number" id="targetViews" placeholder="Target Views">
+    <h1>📊 Live View Tracker</h1>
+    <div class="inputs">
+      <input type="text" id="videoId" placeholder="Enter Video ID">
+      <input type="number" id="targetViews" placeholder="Enter Target Views">
       <input type="time" id="targetTime">
       <button id="startBtn">Start Tracking</button>
       <button id="stopBtn">Stop</button>
     </div>
 
-    <div id="loading" class="hidden">Collecting data...</div>
+    <div id="loading" class="hidden">Loading...</div>
 
-    <div id="stats">
-      <div id="currentViews">Current Views: -</div>
-      <div id="forecast">Forecast: -</div>
-      <div id="viewsLeft">Views Left: -</div>
-      <div id="stopwatch">Time Left: --:--</div>
-      <div id="spikeForecast">Forecasted Spikes Left: -</div>
+    <div class="stats-grid">
+      <div class="card" id="currentViews">Current Views: -</div>
+      <div class="card red" id="viewsLeft">Views Left: -</div>
+      <div class="card" id="forecast">Forecast: -</div>
+      <div class="card" id="stopwatch">Time Left: -</div>
+      <div class="card" id="spikesForecast">Forecasted Spikes Left: -</div>
+      <div class="card" id="viewsPerMinRequired">Views/Min Required: -</div>
+      <div class="card" id="viewsNext5Min">Views Required in Next 5 Min: -</div>
     </div>
 
-    <div id="timeStats">
-      <div id="last5Min">Last 5 Min Views: -</div>
-      <div id="last10Min">Last 10 Min Views: -</div>
-      <div id="last15Min">Last 15 Min Views: -</div>
-      <div id="last20Min">Last 20 Min Views: -</div>
-      <div id="last25Min">Last 25 Min Views: -</div>
-      <div id="last30Min">Last 30 Min Views: -</div>
-      <div id="avgPerMin">Avg Views/Min (Last 15 min): -</div>
+    <div class="stats-grid" id="timeBasedStats">
+      <div class="card" id="last5Min">Last 5 Min Views: -</div>
+      <div class="card" id="last10Min">Last 10 Min Views: -</div>
+      <div class="card" id="last15Min">Last 15 Min Views: -</div>
+      <div class="card" id="last20Min">Last 20 Min Views: -</div>
+      <div class="card" id="last25Min">Last 25 Min Views: -</div>
+      <div class="card" id="last30Min">Last 30 Min Views: -</div>
+      <div class="card" id="avgPerMin">Avg Views/Min (Last 15 min): -</div>
     </div>
 
-    <canvas id="viewChart" width="400" height="150"></canvas>
+    <canvas id="viewChart" height="100"></canvas>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
