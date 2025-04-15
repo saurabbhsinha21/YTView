@@ -2,33 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Live View Tracker</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Live View Tracker</h1>
-    </header>
+  <header>
+    <img src="logo2.png" alt="Logo" class="logo">
+    <h1>Live View Tracker</h1>
+  </header>
 
-    <div class="inputs">
+  <div class="container">
+    <div class="form-section">
       <input type="text" id="videoId" placeholder="YouTube Video ID">
       <input type="number" id="targetViews" placeholder="Target Views">
-      <input type="time" id="targetTime" placeholder="Target Time">
+      <input type="time" id="targetTime">
       <button id="startBtn">Start Tracking</button>
       <button id="stopBtn">Stop</button>
     </div>
 
     <div id="loading" class="hidden">Collecting data...</div>
 
-    <div class="stats">
+    <div id="stats">
       <div id="currentViews">Current Views: -</div>
       <div id="forecast">Forecast: -</div>
-      <div id="viewsLeft" class="">Views Left: -</div>
+      <div id="viewsLeft">Views Left: -</div>
       <div id="stopwatch">Time Left: --:--</div>
+      <div id="spikeForecast">Forecasted Spikes Left: -</div>
     </div>
 
-    <div class="time-stats">
+    <div id="timeStats">
       <div id="last5Min">Last 5 Min Views: -</div>
       <div id="last10Min">Last 10 Min Views: -</div>
       <div id="last15Min">Last 15 Min Views: -</div>
@@ -38,7 +41,7 @@
       <div id="avgPerMin">Avg Views/Min (Last 15 min): -</div>
     </div>
 
-    <canvas id="viewChart" width="800" height="400"></canvas>
+    <canvas id="viewChart" width="400" height="150"></canvas>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
